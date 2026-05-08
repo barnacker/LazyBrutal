@@ -13,8 +13,8 @@ return {
     config = function()
       -- local function to truncate a string at a given length and add a suffix ellipsis to it
       local function truncate(str, len)
-        if #str > len then
-          return str:sub(1, len) .. "…"
+        if vim.fn.strchars(str) > len then
+          return vim.fn.strcharpart(str, 0, len) .. "…"
         end
         return str
       end
@@ -101,7 +101,7 @@ return {
         -- control the padding and make sure our string is always at least 2
         -- characters long. Plus a nice Icon.
         provider = function(self)
-          return "" .. self.mode_names[self.mode] .. ""
+          return (self.mode_names[self.mode] or self.mode or "?") .. ""
         end,
         -- Same goes for the highlight. Now the foreground will change according to the current mode.
         hl = mode_hl,
@@ -124,7 +124,8 @@ return {
 
       local FileEncoding = {
         provider = function()
-          return " " .. (vim.bo.fenc or vim.o.enc) .. " " -- :h 'enc'
+          local enc = vim.bo.fileencoding ~= "" and vim.bo.fileencoding or vim.o.encoding
+          return " " .. enc .. " " -- :h 'enc'
         end,
         hl = "Encoding",
       }
@@ -192,19 +193,20 @@ return {
 
         init = function(self)
           ---@diagnostic disable-next-line: undefined-field
-          self.status_dict = vim.b.gitsigns_status_dict
-          self.has_changes = self.status_dict.added ~= 0
-            or self.status_dict.removed ~= 0
-            or self.status_dict.changed ~= 0
+          self.status_dict = vim.b.gitsigns_status_dict or {}
+          self.has_changes = (self.status_dict.added or 0) ~= 0
+            or (self.status_dict.removed or 0) ~= 0
+            or (self.status_dict.changed or 0) ~= 0
         end,
 
         hl = "StatusLineNC",
 
         { -- git branch name
           provider = function(self)
+            local head = self.status_dict.head or ""
             return ""
-              .. branch_symbol(self.status_dict.head:sub(1, 6))
-              .. truncate(remove_prefix(self.status_dict.head), 30)
+              .. branch_symbol(head:sub(1, 6))
+              .. truncate(remove_prefix(head), 30)
           end,
           hl = { bold = true },
         },
@@ -296,8 +298,9 @@ return {
         hl = "Ruler",
         provider = function()
           local names = {}
+          local clients = vim.lsp.get_clients or vim.lsp.get_active_clients
           ---@diagnostic disable-next-line: unused-local
-          for i, server in pairs(vim.lsp.get_active_clients({ bufnr = 0 })) do
+          for i, server in pairs(clients({ bufnr = 0 })) do
             table.insert(names, shorten_name(server.name))
           end
           return table.concat(names, " ") .. " "
@@ -306,10 +309,23 @@ return {
 
       local Session = {
         hl = mode_hl,
+        update = { "DirChanged" },
         flexible = 1,
-        { provider = vim.fn.fnamemodify(vim.fn.getcwd(), ":~") },
-        { provider = vim.fn.pathshorten(vim.fn.fnamemodify(vim.fn.getcwd(), ":~")) },
-        { provider = vim.fn.fnamemodify(vim.fn.getcwd(), ":t") },
+        {
+          provider = function()
+            return vim.fn.fnamemodify(vim.fn.getcwd(), ":~")
+          end,
+        },
+        {
+          provider = function()
+            return vim.fn.pathshorten(vim.fn.fnamemodify(vim.fn.getcwd(), ":~"))
+          end,
+        },
+        {
+          provider = function()
+            return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+          end,
+        },
       }
 
       local Align = { provider = "%=" }

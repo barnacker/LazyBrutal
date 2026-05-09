@@ -238,30 +238,34 @@ return {
         },
       }
 
+      local function ruler_text()
+        local line = vim.fn.line(".")
+        local col = vim.fn.col(".")
+        local last = vim.fn.line("$")
+        local percent
+
+        if last <= 1 then
+          percent = "All"
+        elseif line == 1 then
+          percent = "Top"
+        elseif line == last then
+          percent = "Bot"
+        else
+          percent = string.format("%d%%", math.floor(line / last * 100))
+        end
+
+        return string.format(" %d:%d %s ", line, col, percent)
+      end
+
       local Ruler = {
-        provider = function()
-          local line = vim.fn.line(".")
-          local col = vim.fn.virtcol(".")
-          local last = vim.fn.line("$")
-          local percent
-
-          if last <= 1 then
-            percent = "All"
-          elseif line == 1 then
-            percent = "Top"
-          elseif line == last then
-            percent = "Bot"
-          else
-            percent = string.format("%d%%%%", math.floor(line / last * 100))
-          end
-
-          local text = string.format("%d:%d %s", line, col, percent)
-          local width = 14
-          local pad = math.max(width - vim.fn.strdisplaywidth(text), 0)
-
-          return string.rep(" ", pad) .. text .. " "
-        end,
+        provider = " %l:%c %P ",
         hl = "Ruler",
+      }
+
+      local RulerBalance = {
+        provider = function()
+          return string.rep(" ", vim.fn.strdisplaywidth(ruler_text()))
+        end,
       }
 
       local MacroRec = {
@@ -382,13 +386,16 @@ return {
             RulerStart,
             LSPActive,
             RulerEnd,
+            RulerBalance,
           },
           {
             ViMode,
             Git,
+            RulerBalance,
           },
           {
             ViMode,
+            RulerBalance,
           },
         },
         Align,

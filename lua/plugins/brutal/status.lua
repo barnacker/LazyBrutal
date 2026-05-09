@@ -11,7 +11,6 @@ return {
       "lewis6991/gitsigns.nvim",
     },
     config = function()
-      -- local function to truncate a string at a given length and add a suffix ellipsis to it
       local function truncate(str, len)
         if vim.fn.strchars(str) > len then
           return vim.fn.strcharpart(str, 0, len) .. "…"
@@ -99,20 +98,10 @@ return {
             t = "TERMINAL",
           },
         },
-        -- We can now access the value of mode() that, by now, would have been
-        -- computed by `init()` and use it to index our strings dictionary.
-        -- note how `static` fields become just regular attributes once the
-        -- component is instantiated.
-        -- To be extra meticulous, we can also add some vim statusline syntax to
-        -- control the padding and make sure our string is always at least 2
-        -- characters long. Plus a nice Icon.
         provider = function(self)
           return (self.mode_names[self.mode] or self.mode or "?") .. ""
         end,
-        -- Same goes for the highlight. Now the foreground will change according to the current mode.
         hl = mode_hl,
-        -- Re-evaluate the component only on ModeChanged event!
-        -- Also allows the statusline to be re-evaluated when entering operator-pending mode
         update = {
           "ModeChanged",
           pattern = "*:*",
@@ -145,7 +134,6 @@ return {
 
       local FileSize = {
         provider = function()
-          -- stackoverflow, compute human readable file size
           local suffix = { "b ", "k ", "M ", "G ", "T ", "P ", "E " }
           local fsize = vim.fn.getfsize(vim.api.nvim_buf_get_name(0))
           fsize = (fsize < 0 and 0) or fsize
@@ -160,8 +148,6 @@ return {
       }
 
       local TerminalName = {
-        -- we could add a condition to check that buftype == 'terminal'
-        -- or we could do that later (see #conditional-statuslines below)
         provider = function()
           local tname, _ = vim.api.nvim_buf_get_name(0):gsub(".*:", "")
           return " " .. tname
@@ -178,7 +164,6 @@ return {
         end,
       }
 
-      -- local function that receives a branche name and that returns a symbol based on the word devlop, master, feature or hotfix
       local function branch_symbol(branch)
         local symbols = {
           develo = " ",
@@ -189,8 +174,7 @@ return {
         return symbols[branch] or " "
       end
 
-      -- local function that revome any text with the slash and return what was after if there is any
-      local function remove_prefix(text)
+      local function branch_label(text)
         return text:match(".*/(.*)") or text
       end
 
@@ -212,11 +196,10 @@ return {
             local head = self.status_dict.head or ""
             return ""
               .. branch_symbol(head:sub(1, 6))
-              .. truncate(remove_prefix(head), 30)
+              .. truncate(branch_label(head), 30)
           end,
           hl = { bold = true },
         },
-        -- You could handle delimiters, icons and counts similar to Diagnostics
         {
           condition = function(self)
             return self.has_changes
@@ -255,12 +238,7 @@ return {
         },
       }
 
-      -- We're getting minimalists here!
       local Ruler = {
-        -- %l = current line number
-        -- %L = number of lines in the buffer
-        -- %c = column number
-        -- %P = percentage through file of displayed window
         provider = " %l:%c %P ",
         hl = "Ruler",
       }
@@ -281,7 +259,6 @@ return {
         },
       }
 
-      -- local function to shorten the lsp server names to its corresponting icons
       local function shorten_name(name)
         local icon = {
           volar = "",
@@ -337,17 +314,22 @@ return {
       local Align = { provider = "%=" }
       local Space = { provider = " " }
       local StylishSpace = { provider = "" }
-      local Start = { provider = "" }
-      local End = { provider = "" }
-      local EncStart = { provider = "", hl = "Encoding" }
-      local EncEnd = { provider = "", hl = "Encoding" }
-      local LFStart = { provider = "", hl = "LineFeed" }
-      local LFEnd = { provider = "", hl = "LineFeed" }
-      local RulerStart = { provider = "", hl = "Ruler" }
-      local RulerEnd = { provider = "", hl = "Ruler" }
-      local SizeStart = { provider = "", hl = "Size" }
-      local flexSession = {
-        {
+      local function segment(provider, hl)
+        return { provider = provider, hl = hl }
+      end
+
+      local Start = segment("")
+      local End = segment("")
+      local EncStart = segment("", "Encoding")
+      local EncEnd = segment("", "Encoding")
+      local LFStart = segment("", "LineFeed")
+      local LFEnd = segment("", "LineFeed")
+      local RulerStart = segment("", "Ruler")
+      local RulerEnd = segment("", "Ruler")
+      local SizeStart = segment("", "Size")
+
+      local function session_spacer()
+        return {
           hl = mode_rev_hl,
           flexible = 1,
           { provider = string.rep("", 5) },
@@ -356,26 +338,19 @@ return {
           { provider = string.rep("", 2) },
           { provider = string.rep("", 1) },
           { provider = "" },
-        },
+        }
+      end
+
+      local flexSession = {
+        session_spacer(),
         {
           hl = mode_hl,
           End,
           Session,
           Start,
         },
-        {
-          hl = mode_rev_hl,
-          flexible = 1,
-          { provider = string.rep("", 5) },
-          { provider = string.rep("", 4) },
-          { provider = string.rep("", 3) },
-          { provider = string.rep("", 2) },
-          { provider = string.rep("", 1) },
-          { provider = "" },
-        },
+        session_spacer(),
       }
-
-      -- ViMode = utils.surround({ "", " " }, "black", { ViMode })
 
       local DefaultStatusline = {
         {
@@ -401,6 +376,9 @@ return {
         {
           flexible = 10,
           {
+            RulerStart,
+            Ruler,
+            RulerEnd,
             MacroRec,
             EncStart,
             FileEncoding,
@@ -408,28 +386,25 @@ return {
             LFStart,
             FileFormat,
             LFEnd,
-            RulerStart,
-            Ruler,
-            RulerEnd,
             SizeStart,
             FileSize,
           },
           {
+            RulerStart,
+            Ruler,
+            RulerEnd,
             MacroRec,
             EncStart,
             FileEncoding,
             EncEnd,
-            RulerStart,
-            Ruler,
-            RulerEnd,
             SizeStart,
             FileSize,
           },
           {
-            MacroRec,
             RulerStart,
             Ruler,
             RulerEnd,
+            MacroRec,
             SizeStart,
             FileSize,
           },
@@ -468,7 +443,6 @@ return {
 
         hl = "Error",
 
-        -- Quickly add a condition to the ViMode to only show it when buffer is active!
         { condition = conditions.is_active, ViMode, StylishSpace },
         FileType,
         Space,
@@ -486,8 +460,6 @@ return {
           end
         end,
 
-        -- the first statusline with no condition, or which condition returns true is used.
-        -- think of it as a switch case with breaks to stop fallthrough.
         fallthrough = false,
 
         SpecialStatusline,

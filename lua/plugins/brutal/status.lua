@@ -252,7 +252,7 @@ return {
           elseif line == last then
             percent = "Bot"
           else
-            percent = string.format("%d%%", math.floor(line / last * 100))
+            percent = string.format("%d%%%%", math.floor(line / last * 100))
           end
 
           local text = string.format("%d:%d %s", line, col, percent)

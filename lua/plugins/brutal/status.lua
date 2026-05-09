@@ -239,7 +239,28 @@ return {
       }
 
       local Ruler = {
-        provider = " %l:%c %P ",
+        provider = function()
+          local line = vim.fn.line(".")
+          local col = vim.fn.virtcol(".")
+          local last = vim.fn.line("$")
+          local percent
+
+          if last <= 1 then
+            percent = "All"
+          elseif line == 1 then
+            percent = "Top"
+          elseif line == last then
+            percent = "Bot"
+          else
+            percent = string.format("%d%%", math.floor(line / last * 100))
+          end
+
+          local text = string.format("%d:%d %s", line, col, percent)
+          local width = 14
+          local pad = math.max(width - vim.fn.strdisplaywidth(text), 0)
+
+          return string.rep(" ", pad) .. text .. " "
+        end,
         hl = "Ruler",
       }
 

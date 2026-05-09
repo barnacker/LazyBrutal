@@ -239,7 +239,7 @@ return {
       }
 
       local Ruler = {
-        provider = " %5l:%-3c %4P ",
+        provider = " %l:%c %P ",
         hl = "Ruler",
       }
 
@@ -376,6 +376,9 @@ return {
         {
           flexible = 10,
           {
+            RulerStart,
+            Ruler,
+            RulerEnd,
             MacroRec,
             EncStart,
             FileEncoding,
@@ -383,28 +386,25 @@ return {
             LFStart,
             FileFormat,
             LFEnd,
-            RulerStart,
-            Ruler,
-            RulerEnd,
             SizeStart,
             FileSize,
           },
           {
+            RulerStart,
+            Ruler,
+            RulerEnd,
             MacroRec,
             EncStart,
             FileEncoding,
             EncEnd,
-            RulerStart,
-            Ruler,
-            RulerEnd,
             SizeStart,
             FileSize,
           },
           {
-            MacroRec,
             RulerStart,
             Ruler,
             RulerEnd,
+            MacroRec,
             SizeStart,
             FileSize,
           },

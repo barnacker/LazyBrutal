@@ -21,28 +21,25 @@ return {
 
       local conditions = require("heirline.conditions")
       local utils = require("heirline.utils")
-      local mode_hl = function(self)
-        local mode = vim.fn.mode(1):sub(1, 1) -- get only the first mode character
-        local mode_colors = {
-          n = "Session",
-          i = "InsertMode",
-          v = "StatusLineNC",
-          V = "StatusLineNC",
-        }
+      local mode_highlights = {
+        n = { hl = "Session", rev_hl = "Title" },
+        i = { hl = "InsertMode", rev_hl = "DapBreakpointIcon" },
+        v = { hl = "StatusLineNC", rev_hl = "SizeCap" },
+        V = { hl = "StatusLineNC", rev_hl = "SizeCap" },
+      }
 
-        return mode_colors[mode] or "StatusLineNC"
+      local function mode_highlight(kind, fallback)
+        local mode = vim.fn.mode(1):sub(1, 1) -- get only the first mode character
+        local highlights = mode_highlights[mode]
+        return (highlights and highlights[kind]) or fallback
       end
 
-      local mode_rev_hl = function(self)
-        local mode = vim.fn.mode(1):sub(1, 1) -- get only the first mode character
-        local mode_colors = {
-          n = "Title",
-          i = "DapBreakpointIcon",
-          v = "SizeCap",
-          V = "SizeCap",
-        }
+      local mode_hl = function()
+        return mode_highlight("hl", "StatusLineNC")
+      end
 
-        return mode_colors[mode] or "SizeCap"
+      local mode_rev_hl = function()
+        return mode_highlight("rev_hl", "SizeCap")
       end
 
       local ViMode = {

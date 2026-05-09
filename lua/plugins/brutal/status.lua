@@ -292,7 +292,7 @@ return {
 
       local Session = {
         hl = mode_hl,
-        update = { "DirChanged" },
+        update = { "DirChanged", "ModeChanged" },
         flexible = 1,
         {
           provider = function()
